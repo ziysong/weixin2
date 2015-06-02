@@ -70,9 +70,10 @@ public class MessageUtils {
 		return xstream.toXML(newsMessage);
 	}
 
-	//getTextMsg模板:普通文本消息
-	public static TextMessage getTextMsg(TextMessage textMessage,
-			String fromUserName, String toUserName) {
+	
+	//getTextMsg模板:普通文本消息============================================
+	public static TextMessage getTextMsg(String fromUserName, String toUserName) {
+		TextMessage textMessage = new TextMessage();
 		textMessage.setMsgType(MESSAGE_TEXT);
 		textMessage.setToUserName(fromUserName);
 		textMessage.setFromUserName(toUserName);
@@ -81,24 +82,49 @@ public class MessageUtils {
 	}
 
 	//普通文本消息1
-	public static String getTextMsg1(TextMessage textMessage,
-			String fromUserName, String toUserName) {
-		TextMessage textMsg = getTextMsg(textMessage,fromUserName,toUserName);
+	public static String getTextMsg1(String fromUserName, String toUserName) {
+		TextMessage textMsg = getTextMsg(fromUserName,toUserName);
 		textMsg.setContent("宋子扬,性别男,爱好女");
 		return textMessageToXml(textMsg);
 	}
 	
 	//普通文本消息2
-	public static String getTextMsg2(TextMessage textMessage,
-			String fromUserName, String toUserName, String content) {
-		TextMessage textMsg = getTextMsg(textMessage,fromUserName,toUserName);
+	public static String getTextMsg2(String fromUserName, String toUserName, String content) {
+		TextMessage textMsg = getTextMsg(fromUserName,toUserName);
 		textMsg.setContent("您发送的内容是:"+content);
 		return textMessageToXml(textMsg);
 	}
 
-	//getNewsMsg模板：图文消息
-	public static NewsMessage getNewsMsg(NewsMessage newsMessage,
-			String fromUserName, String toUserName) {
+	//帮助信息
+	public static String getHelpMenu(String fromUserName, String toUserName) {
+		TextMessage textMsg = getTextMsg(fromUserName,toUserName);
+		StringBuffer sb = new StringBuffer();
+		sb.append("回复'1'可获取宋子扬的基本信息/::*/::*\n");
+		sb.append("回复'2'可获取一条图文消息/:X-)/:X-) \n");  
+		sb.append("回复'3'试试看/::$/::$ \n");  
+		sb.append("回复'?'可获取帮助\ue056\ue056 ");
+		textMsg.setContent(sb.toString());   
+		return textMessageToXml(textMsg);
+	}    
+
+	//首次关注时推送
+	public static String getFirstMenu(String fromUserName, String toUserName) {
+		TextMessage textMsg = getTextMsg(fromUserName,toUserName);
+		StringBuffer sb = new StringBuffer();
+		sb.append("欢迎你关注宋子扬的小窝/:,@-D/:,@-D\n");
+		sb.append("回复'1'可获取宋子扬的基本信息/::*/::*\n");
+		sb.append("回复'2'可获取一条图文消息/:X-)/:X-) \n");  
+		sb.append("回复'3'试试看/::$/::$ \n");  
+		sb.append("回复'?'可获取帮助\ue056\ue056 ");
+		textMsg.setContent(sb.toString());
+		return textMessageToXml(textMsg);  
+	}
+	
+	
+	
+	//getNewsMsg模板：图文消息============================================
+	public static NewsMessage getNewsMsg(String fromUserName, String toUserName) {
+		NewsMessage newsMessage = new NewsMessage();
 		newsMessage.setMsgType(MessageUtils.MESSAGE_NEWS); 
 		newsMessage.setToUserName(fromUserName);
 		newsMessage.setFromUserName(toUserName);
@@ -107,16 +133,15 @@ public class MessageUtils {
 	}
 	
 	//图文消息1：单条
-	public static String getNewsMsg1(NewsMessage newsMessage,
-			String fromUserName, String toUserName) {
-		NewsMessage newsMsg = getNewsMsg(newsMessage, fromUserName, toUserName);
+	public static String getNewsMsg1(String fromUserName, String toUserName) {
+		NewsMessage newsMsg = getNewsMsg(fromUserName, toUserName);
 		News article = new News();
 		List<News> articles = new ArrayList<News>();
 		
-		article.setTitle("大数据离不开”厚数据“");
+		article.setTitle("大数据离不开“厚数据”");
 		article.setDescription("大数据是驱动下一轮创新的动力,风投公司专门确立针对大数据的投资组合。");
-		/**考虑能否设置相对路径*/
-		article.setPicUrl("http://ziysong.tunnel.mobi/weixin2/image/girl1.jpg");
+		/**考虑能否设置相对路径:不能*/
+		article.setPicUrl("http://ziysong.tunnel.mobi/weixin2/image/girl1.jpg");  
 		article.setUrl("https://github.com/ziysong");
 		articles.add(article);
 		
@@ -126,9 +151,8 @@ public class MessageUtils {
 	} 
 		
 	//图文消息2：多条
-	public static String getNewsMsg2(NewsMessage newsMessage,
-			String fromUserName, String toUserName){
-		NewsMessage newsMsg = getNewsMsg(newsMessage, fromUserName, toUserName);
+	public static String getNewsMsg2(String fromUserName, String toUserName){
+		NewsMessage newsMsg = getNewsMsg(fromUserName, toUserName);
 		List<News> articles = new ArrayList<News>();
 		
 		News article1 = new News(); //第一条显示title+大图
@@ -157,33 +181,11 @@ public class MessageUtils {
 		return MessageUtils.newsMessageToXml(newsMsg);
 	}
 	
-	//帮助信息
-	public static String getHelpMenu(TextMessage textMessage,
-			String fromUserName, String toUserName) {
-		TextMessage textMsg = getTextMsg(textMessage,fromUserName,toUserName);
-		StringBuffer sb = new StringBuffer();
-		sb.append("回复'1'可获取宋子扬的基本信息/::*/::*\n");
-		sb.append("回复'2'可获取一条图文消息/:X-)/:X-) \n");  
-		sb.append("回复'3'试试看/::$/::$ \n");  
-		sb.append("回复'?'可获取帮助\ue056\ue056 ");
-		textMsg.setContent(sb.toString());   
-		return textMessageToXml(textMsg);
-	}    
-
-	//首次关注时推送
-	public static String getFirstMenu(TextMessage textMessage,
-			String fromUserName, String toUserName) {
-		TextMessage textMsg = getTextMsg(textMessage,fromUserName,toUserName);
-		StringBuffer sb = new StringBuffer();
-		sb.append("欢迎你关注宋子扬的小窝/:,@-D/:,@-D\n");
-		sb.append("回复'1'可获取宋子扬的基本信息/::*/::*\n");
-		sb.append("回复'2'可获取一条图文消息/:X-)/:X-) \n");  
-		sb.append("回复'3'试试看/::$/::$ \n");  
-		sb.append("回复'?'可获取帮助\ue056\ue056 ");
-		textMsg.setContent(sb.toString());
-		return textMessageToXml(textMsg);  
-	}
-
+	
+	
+	//图片消息：
+	
+	
 
 	
 	

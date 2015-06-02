@@ -57,35 +57,32 @@ public class WeiXinServlet extends HttpServlet{
 
 		//回复消息
 		String message = null;
-		TextMessage textMessage = new TextMessage();
-		NewsMessage newsMessage = new NewsMessage();
 		if(MessageUtils.MESSAGE_TEXT.equals(msgType)){
-			textMessage.setMsgType("text");
 			switch(content){  
 			case("1"):
-				message = MessageUtils.getTextMsg1(textMessage,fromUserName,toUserName);
+				message = MessageUtils.getTextMsg1(fromUserName,toUserName);
 				break;
 			case("2"):
-				message = MessageUtils.getNewsMsg1(newsMessage,fromUserName,toUserName);
+				message = MessageUtils.getNewsMsg1(fromUserName,toUserName);
 				break;
 			case("3"):
-				message = MessageUtils.getNewsMsg2(newsMessage,fromUserName,toUserName);
+				message = MessageUtils.getNewsMsg2(fromUserName,toUserName);
 				break;
 			case("？"):
-				message = MessageUtils.getHelpMenu(textMessage,fromUserName,toUserName);
+				message = MessageUtils.getHelpMenu(fromUserName,toUserName);
 				break;  
 			case("?"):
-				message = MessageUtils.getHelpMenu(textMessage,fromUserName,toUserName);
+				message = MessageUtils.getHelpMenu(fromUserName,toUserName);
 				break;  
-			default:
-				message = MessageUtils.getTextMsg2(textMessage,fromUserName,toUserName,content);
+			default:     
+				message = MessageUtils.getTextMsg2(fromUserName,toUserName,content);
 				break;
 			}
 			
 		}else if(MessageUtils.MESSAGE_EVENT.equals(msgType)){
 			String eventType = map.get("Event"); //获取事件类型
 			if(MessageUtils.MESSAGE_SUBSCRIBE.equals(eventType)){
-				message = MessageUtils.getFirstMenu(textMessage,fromUserName,toUserName);
+				message = MessageUtils.getFirstMenu(fromUserName,toUserName);
 System.out.println("用户"+fromUserName+"关注了你哦！");				
 			}else if(MessageUtils.MESSAGE_UNSUBSCRIBE.equals(eventType)){
 System.out.println("用户"+fromUserName+"取消关注了你！");
