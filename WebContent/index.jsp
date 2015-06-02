@@ -8,7 +8,7 @@
 </head>
 <body>
 这是首页
-<form action="${pageContext.request.contextPath }/weixinServlet">
+<form action="${pageContext.request.contextPath }/weiXinServlet">
 	<input type="submit" value="点击访问servlet"/>
 </form>
 

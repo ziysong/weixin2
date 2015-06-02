@@ -2,8 +2,6 @@ package com.szy.weixin.service;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Map;
 
 import javax.servlet.ServletException;
@@ -12,11 +10,14 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.dom4j.DocumentException;
+
+import com.szy.weixin.domain.NewsMessage;
 import com.szy.weixin.domain.TextMessage;
 import com.szy.weixin.util.CheckUtils;
 import com.szy.weixin.util.MessageUtils;
 
-@WebServlet(urlPatterns={"/weixinServlet"})
+@WebServlet(urlPatterns={"/weiXinServlet"})
 public class WeiXinServlet extends HttpServlet{
 
 	/**接口的验证通过get请求*/
@@ -26,7 +27,6 @@ public class WeiXinServlet extends HttpServlet{
 		String timestamp = request.getParameter("timestamp");
 		String nonce = request.getParameter("nonce");
 		String echostr = request.getParameter("echostr");
-		
 		boolean result = CheckUtils.checkSignature(signature,timestamp,nonce);
 		PrintWriter out = response.getWriter();
 		if(result){
@@ -42,7 +42,13 @@ public class WeiXinServlet extends HttpServlet{
 		response.setCharacterEncoding("UTF-8");
 		PrintWriter out = response.getWriter();
 		//获得消息
-		Map<String,String> map = MessageUtils.xmlToMessage(request);
+		Map<String, String> map = null;
+		try {
+			map = MessageUtils.xmlToMessage(request);
+		} catch (DocumentException e) {
+			out.print("");
+			e.printStackTrace();
+		}
 		String toUserName = map.get("ToUserName"); //接收方name
 		String fromUserName = map.get("FromUserName"); //发送方name 
 		String msgType = map.get("MsgType"); //消息类型
@@ -52,47 +58,48 @@ public class WeiXinServlet extends HttpServlet{
 		//回复消息
 		String message = null;
 		TextMessage textMessage = new TextMessage();
-		textMessage.setToUserName(fromUserName);//设置接收方的name,即原来的FromUserName
-		textMessage.setFromUserName(toUserName);
-		textMessage.setCreateTime(createTime); //必须要,否则不会把消息推送给用户
-//		textMessage.setMsgId("123"); //不是必须的
+		NewsMessage newsMessage = new NewsMessage();
 		if(MessageUtils.MESSAGE_TEXT.equals(msgType)){
 			textMessage.setMsgType("text");
 			switch(content){  
 			case("1"):
-				textMessage.setContent("宋子扬,性别:男,爱好:女");
+				message = MessageUtils.getTextMsg1(textMessage,fromUserName,toUserName);
 				break;
 			case("2"):
-				textMessage.setContent("宋子扬,有着无比魅力的雄性声音,如果你跟他交流,你会很快的被他深深的迷倒。");
+				message = MessageUtils.getNewsMsg1(newsMessage,fromUserName,toUserName);
+				break;
+			case("3"):
+				message = MessageUtils.getNewsMsg2(newsMessage,fromUserName,toUserName);
 				break;
 			case("？"):
-				textMessage.setContent(MessageUtils.getHelpMenu());
-				break;
+				message = MessageUtils.getHelpMenu(textMessage,fromUserName,toUserName);
+				break;  
 			case("?"):
-				textMessage.setContent(MessageUtils.getHelpMenu());
-				break;
+				message = MessageUtils.getHelpMenu(textMessage,fromUserName,toUserName);
+				break;  
 			default:
-				textMessage.setContent("您发送的内容是:"+content);
+				message = MessageUtils.getTextMsg2(textMessage,fromUserName,toUserName,content);
 				break;
 			}
 			
 		}else if(MessageUtils.MESSAGE_EVENT.equals(msgType)){
-			textMessage.setMsgType("text");
 			String eventType = map.get("Event"); //获取事件类型
 			if(MessageUtils.MESSAGE_SUBSCRIBE.equals(eventType)){
-				textMessage.setContent(MessageUtils.getFirstMenu());
+				message = MessageUtils.getFirstMenu(textMessage,fromUserName,toUserName);
 System.out.println("用户"+fromUserName+"关注了你哦！");				
 			}else if(MessageUtils.MESSAGE_UNSUBSCRIBE.equals(eventType)){
-				textMessage.setContent("用户"+fromUserName+"取消关注了你！");
 System.out.println("用户"+fromUserName+"取消关注了你！");
 			}else{
-				textMessage.setContent("其他事件！");
+				out.print("");
 			}
 		}
 		
-		message = MessageUtils.textMessageToXml(textMessage);//将消息对象转为xml数据
-System.out.println(message);
-		out.print(message);
+		//发送出去
+		if(message != null){
+			out.print(message);
+		}else{
+			out.print("");
+		}
 		return;
 	}
 	
