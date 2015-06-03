@@ -5,14 +5,14 @@ import com.szy.weixin.base.BaseMessage;
 
 public class ImageMessage extends BaseMessage{
 
-	private Image image;
+	private Images Image;
 
-	public Image getImage() {
-		return image;
+	public Images getImage() {
+		return Image;
 	}
 
-	public void setImage(Image image) {
-		this.image = image;
+	public void setImage(Images Image) {
+		this.Image = Image;
 	}
 	
 	

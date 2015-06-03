@@ -32,6 +32,7 @@ public class WeiXinServlet extends HttpServlet{
 		if(result){
 			out.print(echostr);  //校验成功则将echostr原样返回
 		}
+		return;
 	}
 
 	
@@ -68,6 +69,12 @@ public class WeiXinServlet extends HttpServlet{
 			case("3"):
 				message = MessageUtils.getNewsMsg2(fromUserName,toUserName);
 				break;
+			case("4"):
+				message = MessageUtils.getImageMsg1(fromUserName, toUserName);
+				break;
+			case("5"):
+				message = MessageUtils.getMusicMsg1(fromUserName, toUserName);
+				break;
 			case("？"):
 				message = MessageUtils.getHelpMenu(fromUserName,toUserName);
 				break;  
@@ -83,16 +90,16 @@ public class WeiXinServlet extends HttpServlet{
 			String eventType = map.get("Event"); //获取事件类型
 			if(MessageUtils.MESSAGE_SUBSCRIBE.equals(eventType)){
 				message = MessageUtils.getFirstMenu(fromUserName,toUserName);
-System.out.println("用户"+fromUserName+"关注了你哦！");				
 			}else if(MessageUtils.MESSAGE_UNSUBSCRIBE.equals(eventType)){
-System.out.println("用户"+fromUserName+"取消关注了你！");
+				System.out.println("用户"+fromUserName+"取消关注了你！");
 			}else{
 				out.print("");
 			}
 		}
 		
-		//发送出去
+		//发送消息
 		if(message != null){
+System.out.println(message);
 			out.print(message);
 		}else{
 			out.print("");
