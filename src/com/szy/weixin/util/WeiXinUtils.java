@@ -1,16 +1,19 @@
 package com.szy.weixin.util;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Date;
 
 import net.sf.json.JSONObject;
 
@@ -23,16 +26,21 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 
 import com.szy.weixin.domain.AccessToken;
+import com.szy.weixin.menu.Button;
+import com.szy.weixin.menu.ClickButton;
+import com.szy.weixin.menu.Menu;
+import com.szy.weixin.menu.ViewButton;
 
 public class WeiXinUtils {
 
-	private static final String APPID = "wxf407840f6d83f810";
-	private static final String APPSECRET = "ec73a93b97dc0eb81256bad87bcd5f4f";
+	private static final String APPID = "wxfc4f6c743be6597e";
+	private static final String APPSECRET = "2617642f5759ed72b41ea1c89c5ff206";
 	
 	private static final String ACCESSTOKEN_URL = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=APPID&secret=APPSECRET";
 	private static final String UPLOAD_TEMP_URL = "https://api.weixin.qq.com/cgi-bin/media/upload?access_token=ACCESS_TOKEN&type=TYPE";
 	private static final String UPLOAD_PERM_NEWS_URL = "https://api.weixin.qq.com/cgi-bin/material/add_news?access_token=ACCESS_TOKEN";
 	private static final String UPLOAD_PERM_OTHER_URL = "https://api.weixin.qq.com/cgi-bin/material/add_material?access_token=ACCESS_TOKEN";
+	private static final String CREATE_MENU_URL = "https://api.weixin.qq.com/cgi-bin/menu/create?access_token=ACCESS_TOKEN";
 	
 	/**
 	 * get请求
@@ -87,12 +95,47 @@ public class WeiXinUtils {
 	
 	//获取AccessToken
 	public static AccessToken getAccessToken(){
-		String url = ACCESSTOKEN_URL.replace("APPID", APPID).replace("APPSECRET", APPSECRET);
-		JSONObject jsonObject = dogetString(url);
-		AccessToken accessToken = new AccessToken();
-		accessToken.setAccess_token(jsonObject.getString("access_token"));
-		accessToken.setExpires_in(jsonObject.getInt("expires_in"));
-		return accessToken;
+		File file = new File("Y:\\weixin\\AccessToken.txt");;
+		ObjectInputStream ois = null;
+		ObjectOutputStream oos = null;
+		try {
+			//如果没有过期则返回该accessToken对象
+			ois = new ObjectInputStream(new FileInputStream(file));//执行此方法前必须先将对象写到文件中，否则报错
+			if(ois != null){
+				AccessToken accessTokenOld = (AccessToken) ois.readObject();
+				long nowTime = new Date().getTime();
+				long createTime= accessTokenOld.getCreateTime();
+				if(nowTime-createTime < 7200000){ 
+					return accessTokenOld;
+				}
+			}
+			//获取新的AccessToken
+			String url = ACCESSTOKEN_URL.replace("APPID", APPID).replace("APPSECRET", APPSECRET);
+			JSONObject jsonObject = dogetString(url);
+			AccessToken accessTokenNew = new AccessToken();
+			accessTokenNew.setAccess_token(jsonObject.getString("access_token"));
+			accessTokenNew.setExpires_in(jsonObject.getInt("expires_in"));
+			accessTokenNew.setCreateTime(new Date().getTime());
+			
+			//将新的AccessToken对象序列化到文件中
+			oos = new ObjectOutputStream(new FileOutputStream(file));
+			oos.writeObject(accessTokenNew);
+			return accessTokenNew;
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally{
+			try {
+				if(ois != null){
+					ois.close();
+				}
+				if(oos != null){
+					oos.close();
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		return null;
 	}
 	
 	//上传临时素材
@@ -168,7 +211,6 @@ public class WeiXinUtils {
 			}
 			conn.disconnect();
 		}         
-System.out.println("reslut:"+result);	
 		JSONObject jsonObject = JSONObject.fromObject(result);
 		String typeName = "media_id";
 		if(!"image".equals(type)){  
@@ -178,6 +220,60 @@ System.out.println("reslut:"+result);
 		return mediaId;
 	}
 	
-	
-	
+	//创建菜单：
+	public static void createMenu(){
+		//一级菜单1
+		ViewButton button1  = new ViewButton();
+		button1.setName("知乎");
+		button1.setType("view");
+		button1.setUrl("http://www.zhihu.com/");
+		
+		//一级菜单2
+		ViewButton button2  = new ViewButton();
+		button2.setName("微博");
+		button2.setType("view");
+		button2.setUrl("http://weibo.com/");
+		
+		//子菜单1
+		ClickButton button31 = new ClickButton();
+		button31.setName("扫一扫");
+		button31.setKey("31");
+		button31.setType("scancode_push");
+		//子菜单2
+		ClickButton button32 = new ClickButton();
+		button32.setName("拍一拍");
+		button32.setKey("32");
+		button32.setType("pic_sysphoto");
+		//子菜单3
+		ClickButton button33 = new ClickButton();
+		button33.setName("我在哪");
+		button33.setKey("33");
+		button33.setType("location_select");
+		//子菜单4
+		ClickButton button34 = new ClickButton();
+		button34.setName("今日歌曲");
+		button34.setKey("34");
+		button34.setType("click");
+		//子菜单5
+//		ClickButton button35 = new ClickButton();
+//		button35.setName("扫码推");
+//		button35.setKey("35");
+//		button35.setType("scancode_waitmsg");
+		//一级菜单3
+		Button button3 = new Button();  
+		button3.setName("什么鬼");
+		button3.setSub_button(new Button[]{button31,button32,button33,button34});
+		
+		//封装一级菜单
+		Menu menu = new Menu();
+		menu.setButton(new Button[]{button1,button2,button3});
+		
+		AccessToken accessToken = WeiXinUtils.getAccessToken();
+		String access_token = accessToken.getAccess_token();
+		String url = CREATE_MENU_URL.replace("ACCESS_TOKEN", access_token);
+		String outStr = JSONObject.fromObject(menu).toString();
+		JSONObject jsonResult = dopostString(url,outStr);
+System.out.println(jsonResult);		
+	}
+		
 }

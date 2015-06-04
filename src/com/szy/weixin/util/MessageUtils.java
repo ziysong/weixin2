@@ -134,7 +134,7 @@ public class MessageUtils {
 	public static String getFirstMenu(String fromUserName, String toUserName) {
 		TextMessage textMsg = getTextMsg(fromUserName,toUserName);
 		StringBuffer sb = new StringBuffer();
-		sb.append("欢迎你关注宋子扬的小窝/:,@-D/:,@-D\n");
+		sb.append("欢迎您关注宋子扬的小窝/:,@-D/:,@-D\n");
 		sb.append("回复'1'可获取宋子扬的基本信息/::*/::*\n");
 		sb.append("回复'2'可获取一条图文消息/:X-)/:X-) \n");  
 		sb.append("回复'3'试试看/::$/::$ \n");  
