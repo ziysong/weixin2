@@ -88,13 +88,20 @@ public class WeiXinServlet extends HttpServlet{
 			
 		}else if(MessageUtils.MESSAGE_EVENT.equals(msgType)){
 			String eventType = map.get("Event"); //获取事件类型
+			//关注事件
 			if(MessageUtils.MESSAGE_SUBSCRIBE.equals(eventType)){
 				message = MessageUtils.getFirstMenu(fromUserName,toUserName);
-			}else if(MessageUtils.MESSAGE_UNSUBSCRIBE.equals(eventType)){
-				System.out.println("用户"+fromUserName+"取消关注了你！");
-			}else{
-				out.print("");
 			}
+			//点击事件
+			if(MessageUtils.MESSAGE_CLICK.equals(eventType)){
+				String eventKey = map.get("EventKey");
+				if("34".equals(eventKey)){
+					message = MessageUtils.getImageMsg1(fromUserName, toUserName);
+				}
+			}
+			//地理位置选择
+		}else if(MessageUtils.MESSAGE_LOCATION.equals(msgType)){
+			message = MessageUtils.getTextMsg2(fromUserName,toUserName,map.get("Label"));
 		}
 		
 		//发送消息

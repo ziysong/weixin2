@@ -12,7 +12,7 @@ public class TestCreateMenu {
 	public static void main(String[] args){
 		WeiXinUtils.createMenu();
 	}
-	
+	   
 	@Test
 	public void test1(){
 		long date1 = new Date().getTime();

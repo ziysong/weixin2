@@ -100,15 +100,15 @@ public class WeiXinUtils {
 		ObjectOutputStream oos = null;
 		try {
 			//如果没有过期则返回该accessToken对象
-			ois = new ObjectInputStream(new FileInputStream(file));//执行此方法前必须先将对象写到文件中，否则报错
-			if(ois != null){
-				AccessToken accessTokenOld = (AccessToken) ois.readObject();
-				long nowTime = new Date().getTime();
-				long createTime= accessTokenOld.getCreateTime();
-				if(nowTime-createTime < 7200000){ 
-					return accessTokenOld;
-				}
-			}
+//			ois = new ObjectInputStream(new FileInputStream(file));//执行此方法前必须先将对象写到文件中，否则报错
+//			if(ois != null){
+//				AccessToken accessTokenOld = (AccessToken) ois.readObject();
+//				long nowTime = new Date().getTime();
+//				long createTime= accessTokenOld.getCreateTime();
+//				if(nowTime-createTime < 7200000){ 
+//					return accessTokenOld;
+//				}
+//			}
 			//获取新的AccessToken
 			String url = ACCESSTOKEN_URL.replace("APPID", APPID).replace("APPSECRET", APPSECRET);
 			JSONObject jsonObject = dogetString(url);
@@ -210,13 +210,18 @@ public class WeiXinUtils {
 				reader.close();
 			}
 			conn.disconnect();
-		}         
-		JSONObject jsonObject = JSONObject.fromObject(result);
-		String typeName = "media_id";
-		if(!"image".equals(type)){  
-			typeName = type + "_media_id";
+		}    
+		String mediaId = null;
+		try{
+			JSONObject jsonObject = JSONObject.fromObject(result);
+			String typeName = "media_id";
+			if(!"image".equals(type)){  
+				typeName = type + "_media_id";
+			}
+			mediaId = jsonObject.getString(typeName);
+		}catch(Exception e){
+			System.out.println("api功能未授权，请确认公众号已获得该接口!");
 		}
-		String mediaId = jsonObject.getString(typeName);
 		return mediaId;
 	}
 	
@@ -232,7 +237,7 @@ public class WeiXinUtils {
 		ViewButton button2  = new ViewButton();
 		button2.setName("微博");
 		button2.setType("view");
-		button2.setUrl("http://weibo.com/");
+		button2.setUrl("http://www.weibo.com/");
 		
 		//子菜单1
 		ClickButton button31 = new ClickButton();
@@ -250,19 +255,19 @@ public class WeiXinUtils {
 		button33.setKey("33");
 		button33.setType("location_select");
 		//子菜单4
-		ClickButton button34 = new ClickButton();
-		button34.setName("今日歌曲");
-		button34.setKey("34");
-		button34.setType("click");
+		ViewButton button34 = new ViewButton();
+		button34.setName("我的博客");
+		button34.setUrl("http://blog.csdn.net/u012599724/");
+		button34.setType("view");
 		//子菜单5
-//		ClickButton button35 = new ClickButton();
-//		button35.setName("扫码推");
-//		button35.setKey("35");
-//		button35.setType("scancode_waitmsg");
+		ViewButton button35 = new ViewButton();
+		button35.setName("java技术");
+		button35.setUrl("http://www.imooc.com/");
+		button35.setType("view");
 		//一级菜单3
 		Button button3 = new Button();  
 		button3.setName("什么鬼");
-		button3.setSub_button(new Button[]{button31,button32,button33,button34});
+		button3.setSub_button(new Button[]{button31,button32,button33,button34,button35});
 		
 		//封装一级菜单
 		Menu menu = new Menu();

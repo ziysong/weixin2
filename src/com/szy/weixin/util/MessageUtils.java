@@ -16,10 +16,10 @@ import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 
-import com.szy.weixin.doamin.MusicMessage;
 import com.szy.weixin.domain.AccessToken;
 import com.szy.weixin.domain.ImageMessage;
 import com.szy.weixin.domain.Images;
+import com.szy.weixin.domain.MusicMessage;
 import com.szy.weixin.domain.Musics;
 import com.szy.weixin.domain.News;
 import com.szy.weixin.domain.NewsMessage;
@@ -42,8 +42,8 @@ public class MessageUtils {
 	//事件类型:Event.它的消息类型是event
 	public final static String MESSAGE_SUBSCRIBE = "subscribe"; //关注
 	public final static String MESSAGE_UNSUBSCRIBE = "unsubscribe";//取消关注
-	public final static String MESSAGE_CLICK = "click";//单击子菜单
-	public final static String MESSAGE_LOCATION_EVENT = "location";//地理位置事件
+	public final static String MESSAGE_CLICK = "CLICK";//单击子菜单
+	public final static String MESSAGE_LOCATION_SELECT = "location_select";//地理位置选择
 	
 	
 	/**将xml数据转为文本消息对象,用map接收*/
@@ -58,6 +58,7 @@ public class MessageUtils {
 		List<Element> elements = root.elements();
 		for(Element element : elements){
 			map.put(element.getName(), element.getText());
+System.out.println(map);			
 		}
 		return map;
 	}
@@ -112,7 +113,7 @@ public class MessageUtils {
 	//普通文本消息2
 	public static String getTextMsg2(String fromUserName, String toUserName, String content) {
 		TextMessage textMsg = getTextMsg(fromUserName,toUserName);
-		textMsg.setContent("您发送的内容是:"+content);
+		textMsg.setContent(content);
 		return textMessageToXml(textMsg);
 	}
 
@@ -215,7 +216,7 @@ public class MessageUtils {
 		return imageMessage;
 	}
 	
-	//图片消息1
+	//图片消息1:需要权限
 	public static String getImageMsg1(String fromUserName, String toUserName){
 		ImageMessage imageMessage = getImageMsg(fromUserName, toUserName);
 		imageMessage.setMsgType(MESSAGE_IMAGE);
@@ -252,7 +253,6 @@ public class MessageUtils {
 	//音乐消息1:
 	public static String getMusicMsg1(String fromUserName, String toUserName) throws IOException{
 		MusicMessage musicMessage = getMusicMsg(fromUserName, toUserName);
-		     
 		
 		Musics musics = new Musics();
 		musics.setTitle("宝贝");
