@@ -2,6 +2,7 @@ package com.szy.weixin.util;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -117,6 +118,13 @@ System.out.println(map);
 		return textMessageToXml(textMsg);
 	}
 
+	//普通文本消息3：语音翻译出错的提示信息
+	public static String getTextMsg3(String fromUserName, String toUserName) {
+		TextMessage textMsg = getTextMsg(fromUserName,toUserName);
+		textMsg.setContent("您的语音有误,请再说一遍.目前语音输入只支持翻译功能.");
+		return textMessageToXml(textMsg);
+	}
+	
 	//帮助信息
 	public static String getHelpMenu(String fromUserName, String toUserName) {
 		TextMessage textMsg = getTextMsg(fromUserName,toUserName);
@@ -124,13 +132,26 @@ System.out.println(map);
 		sb.append("回复'1'可获取宋子扬的基本信息/::*/::*\n");
 		sb.append("回复'2'可获取一条图文消息/:X-)/:X-) \n");  
 		sb.append("回复'3'试试看/::$/::$ \n");  
-		sb.append("回复'4'获取一张图片\ue412\ue412 \n");
-		sb.append("回复'5'获取一首歌/:,@-D/:,@-D \n");
+		sb.append("回复'翻译'获取翻译帮助 \n");
 		sb.append("回复'?'可获取帮助\ue056\ue056 \n");
 		textMsg.setContent(sb.toString());   
 		return textMessageToXml(textMsg);
 	}    
 
+	//获取翻译帮助：
+		public static String getTransHelp(String fromUserName, String toUserName){
+			TextMessage textMsg = getTextMsg(fromUserName,toUserName);
+			StringBuffer sb = new StringBuffer();
+			sb.append("翻译使用示例：\n");
+			sb.append("*翻译football\n");
+			sb.append("*翻译足球\n");
+			sb.append("*或者通过语音说出您要翻译的内容,如说:\"翻译football\" \n");
+			sb.append("回复?获取帮助");
+			textMsg.setContent(sb.toString());
+			return textMessageToXml(textMsg);
+		}  
+		
+	
 	//首次关注时推送
 	public static String getFirstMenu(String fromUserName, String toUserName) {
 		TextMessage textMsg = getTextMsg(fromUserName,toUserName);
@@ -139,6 +160,7 @@ System.out.println(map);
 		sb.append("回复'1'可获取宋子扬的基本信息/::*/::*\n");
 		sb.append("回复'2'可获取一条图文消息/:X-)/:X-) \n");  
 		sb.append("回复'3'试试看/::$/::$ \n");  
+		sb.append("回复'翻译'获取翻译帮助 \n");
 		sb.append("回复'?'可获取帮助\ue056\ue056 ");
 		textMsg.setContent(sb.toString());
 		return textMessageToXml(textMsg);  
@@ -266,6 +288,24 @@ System.out.println(map);
 		musicMessage.setMusic(musics);
 		return MessageUtils.musicMessageToXml(musicMessage);
 	}
+
+	//翻译：
+	public static String getTransMsg(String content, String fromUserName,
+			String toUserName) throws UnsupportedEncodingException {
+		if(content.startsWith("翻译")){
+			String  source = content.replaceFirst("^翻译", "").trim();
+			if("".equals(source)){
+				return MessageUtils.getTransHelp(fromUserName,toUserName); //content为翻译,获取翻译帮助
+			}else{
+				String dst = WeiXinUtils.translate(source);//content为翻译XX,获取翻译内容
+				return MessageUtils.getTextMsg2(fromUserName,toUserName,dst);
+			}
+		}else{
+			return MessageUtils.getTextMsg3(fromUserName,toUserName);
+		}
+	}
+
+	
 	
 	
 }

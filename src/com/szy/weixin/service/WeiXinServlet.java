@@ -16,6 +16,7 @@ import com.szy.weixin.domain.NewsMessage;
 import com.szy.weixin.domain.TextMessage;
 import com.szy.weixin.util.CheckUtils;
 import com.szy.weixin.util.MessageUtils;
+import com.szy.weixin.util.WeiXinUtils;
 
 @WebServlet(urlPatterns={"/weiXinServlet"})
 public class WeiXinServlet extends HttpServlet{
@@ -50,15 +51,29 @@ public class WeiXinServlet extends HttpServlet{
 			out.print("");
 			e.printStackTrace();
 		}
-		String toUserName = map.get("ToUserName"); //接收方name
-		String fromUserName = map.get("FromUserName"); //发送方name 
-		String msgType = map.get("MsgType"); //消息类型
-		String content = map.get("Content"); //消息内容
-		String createTime = map.get("CreateTime");
+		String content = null;
+		String toUserName = null;
+		String fromUserName = null;
+		String msgType = null;
+		String createTime = null;
+		toUserName = map.get("ToUserName"); //接收方name
+		fromUserName = map.get("FromUserName"); //发送方name 
+		msgType = map.get("MsgType"); //消息类型
+		content = map.get("Content"); //消息内容
+		createTime = map.get("CreateTime");
 
 		//回复消息
 		String message = null;
+		
+		//语音消息
+		if(MessageUtils.MESSAGE_VOICE.equals(msgType)){
+			content = map.get("Recognition");
+			//语音翻译
+			message = MessageUtils.getTransMsg(content,fromUserName,toUserName);
+		}
+		//文本消息
 		if(MessageUtils.MESSAGE_TEXT.equals(msgType)){
+			
 			switch(content){  
 			case("1"):
 				message = MessageUtils.getTextMsg1(fromUserName,toUserName);
@@ -84,6 +99,11 @@ public class WeiXinServlet extends HttpServlet{
 			default:     
 				message = MessageUtils.getTextMsg2(fromUserName,toUserName,content);
 				break;
+			}
+			
+			//翻译
+			if(content.startsWith("翻译")){
+				message = MessageUtils.getTransMsg(content,fromUserName,toUserName);
 			}
 			
 		}else if(MessageUtils.MESSAGE_EVENT.equals(msgType)){

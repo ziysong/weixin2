@@ -11,10 +11,13 @@ import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.Date;
 
+import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 import org.apache.http.HttpEntity;
@@ -30,18 +33,25 @@ import com.szy.weixin.menu.Button;
 import com.szy.weixin.menu.ClickButton;
 import com.szy.weixin.menu.Menu;
 import com.szy.weixin.menu.ViewButton;
+import com.szy.weixin.translate.Data;
+import com.szy.weixin.translate.Parts;
+import com.szy.weixin.translate.Symbols;
+import com.szy.weixin.translate.TransResult;
 
 public class WeiXinUtils {
 
 	private static final String APPID = "wxfc4f6c743be6597e";
 	private static final String APPSECRET = "2617642f5759ed72b41ea1c89c5ff206";
-	
+
 	private static final String ACCESSTOKEN_URL = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=APPID&secret=APPSECRET";
 	private static final String UPLOAD_TEMP_URL = "https://api.weixin.qq.com/cgi-bin/media/upload?access_token=ACCESS_TOKEN&type=TYPE";
 	private static final String UPLOAD_PERM_NEWS_URL = "https://api.weixin.qq.com/cgi-bin/material/add_news?access_token=ACCESS_TOKEN";
 	private static final String UPLOAD_PERM_OTHER_URL = "https://api.weixin.qq.com/cgi-bin/material/add_material?access_token=ACCESS_TOKEN";
 	private static final String CREATE_MENU_URL = "https://api.weixin.qq.com/cgi-bin/menu/create?access_token=ACCESS_TOKEN";
-	
+
+	private static final String TRANSLATE_URL = "http://openapi.baidu.com/public/2.0/bmt/translate?client_id=ApiKey&q=source&from=auto&to=auto";
+	private static final String DICT_TRANSLATE_URL = "http://openapi.baidu.com/public/2.0/translate/dict/simple?client_id=ApiKey&q=source&from=auto&to=auto";
+													
 	/**
 	 * get请求
 	 * @param url:请求地址
@@ -63,9 +73,9 @@ public class WeiXinUtils {
 		}finally{
 			httpGet.releaseConnection();//释放连接
 		}
-			return jsonObject;
+		return jsonObject;
 	}
-	
+
 	/**
 	 * post请求
 	 * @param url:请求地址
@@ -91,8 +101,8 @@ public class WeiXinUtils {
 		}
 		return jsonObject;
 	}
-	
-	
+
+
 	//获取AccessToken
 	public static AccessToken getAccessToken(){
 		File file = new File("Y:\\weixin\\AccessToken.txt");;
@@ -100,15 +110,15 @@ public class WeiXinUtils {
 		ObjectOutputStream oos = null;
 		try {
 			//如果没有过期则返回该accessToken对象
-//			ois = new ObjectInputStream(new FileInputStream(file));//执行此方法前必须先将对象写到文件中，否则报错
-//			if(ois != null){
-//				AccessToken accessTokenOld = (AccessToken) ois.readObject();
-//				long nowTime = new Date().getTime();
-//				long createTime= accessTokenOld.getCreateTime();
-//				if(nowTime-createTime < 7200000){ 
-//					return accessTokenOld;
-//				}
-//			}
+			//			ois = new ObjectInputStream(new FileInputStream(file));//执行此方法前必须先将对象写到文件中，否则报错
+			//			if(ois != null){
+			//				AccessToken accessTokenOld = (AccessToken) ois.readObject();
+			//				long nowTime = new Date().getTime();
+			//				long createTime= accessTokenOld.getCreateTime();
+			//				if(nowTime-createTime < 7200000){ 
+			//					return accessTokenOld;
+			//				}
+			//			}
 			//获取新的AccessToken
 			String url = ACCESSTOKEN_URL.replace("APPID", APPID).replace("APPSECRET", APPSECRET);
 			JSONObject jsonObject = dogetString(url);
@@ -116,7 +126,7 @@ public class WeiXinUtils {
 			accessTokenNew.setAccess_token(jsonObject.getString("access_token"));
 			accessTokenNew.setExpires_in(jsonObject.getInt("expires_in"));
 			accessTokenNew.setCreateTime(new Date().getTime());
-			
+
 			//将新的AccessToken对象序列化到文件中
 			oos = new ObjectOutputStream(new FileOutputStream(file));
 			oos.writeObject(accessTokenNew);
@@ -137,7 +147,7 @@ public class WeiXinUtils {
 		}
 		return null;
 	}
-	
+
 	//上传临时素材
 	public static String upload(String filePath, String accessToken, String type) throws IOException{
 		File file = new File(filePath);
@@ -147,32 +157,32 @@ public class WeiXinUtils {
 		String url = UPLOAD_TEMP_URL.replace("ACCESS_TOKEN", accessToken).replace("TYPE", type);
 		URL urlObj = new URL(url);
 		HttpURLConnection conn = (HttpURLConnection) urlObj.openConnection();//连接
-		
+
 		conn.setRequestMethod("POST");
 		conn.setDoInput(true);
 		conn.setDoOutput(true);
 		conn.setUseCaches(false);
-		
+
 		conn.setRequestProperty("Connection", "Keep-Alive");//设置请求头信息
 		conn.setRequestProperty("Charset", "utf-8");
-		
+
 		String BOUNDARY = "----------"+System.currentTimeMillis();//设置边界
 		conn.setRequestProperty("Content-Type", "multipart/form-data;boundary=" + BOUNDARY);
-		
+
 		StringBuilder sb = new StringBuilder();
 		sb.append("--");
 		sb.append(BOUNDARY);
 		sb.append("\r\n");
 		sb.append("Content-Disposition:form-data;name=\"file\";filename=\" "+file.getName()+" \"\r\n");
 		sb.append("Content-Type:application/octet-stream\r\n\r\n");
-		
+
 		byte[] head = sb.toString().getBytes("utf-8");
-		
+
 		//获得输出流
 		OutputStream out = new DataOutputStream(conn.getOutputStream());
 		//输出表头
 		out.write(head);
-		
+
 		//文件正文部分
 		//把文件以流文件的方式,推入到url中
 		DataInputStream dis = new DataInputStream(new FileInputStream(file));
@@ -182,14 +192,14 @@ public class WeiXinUtils {
 			out.write(bufferOut, 0, hasRead);
 		}
 		dis.close();
-		
+
 		//结尾部分
 		byte[] foot = ("\r\n--" + BOUNDARY + "--\r\n").getBytes("UTF-8");//定义最后数据分隔
-		
+
 		out.write(foot);
 		out.flush();
 		out.close();
-		
+
 		//获取微信服务器返回结果
 		StringBuffer buffer = new StringBuffer();
 		BufferedReader reader = null;
@@ -224,7 +234,7 @@ public class WeiXinUtils {
 		}
 		return mediaId;
 	}
-	
+
 	//创建菜单：
 	public static void createMenu(){
 		//一级菜单1
@@ -232,13 +242,13 @@ public class WeiXinUtils {
 		button1.setName("知乎");
 		button1.setType("view");
 		button1.setUrl("http://www.zhihu.com/");
-		
+
 		//一级菜单2
 		ViewButton button2  = new ViewButton();
 		button2.setName("微博");
 		button2.setType("view");
 		button2.setUrl("http://www.weibo.com/");
-		
+
 		//子菜单1
 		ClickButton button31 = new ClickButton();
 		button31.setName("扫一扫");
@@ -268,17 +278,80 @@ public class WeiXinUtils {
 		Button button3 = new Button();  
 		button3.setName("什么鬼");
 		button3.setSub_button(new Button[]{button31,button32,button33,button34,button35});
-		
+
 		//封装一级菜单
 		Menu menu = new Menu();
 		menu.setButton(new Button[]{button1,button2,button3});
-		
+
 		AccessToken accessToken = WeiXinUtils.getAccessToken();
 		String access_token = accessToken.getAccess_token();
 		String url = CREATE_MENU_URL.replace("ACCESS_TOKEN", access_token);
 		String outStr = JSONObject.fromObject(menu).toString();
-		JSONObject jsonResult = dopostString(url,outStr);
-System.out.println(jsonResult);		
-	}
 		
+		dopostString(url,outStr);
+	}
+
+	
+	/**
+	 * 百度词典翻译API:只能翻译词组
+	 * @param source 待翻译内容
+	 * @return
+	 * @throws UnsupportedEncodingException 
+	 */
+	public static String translate(String source) throws UnsupportedEncodingException{				
+		String url = DICT_TRANSLATE_URL.replace("ApiKey", "kgl3w0hL9BLBB8Gpc5QqGSF7").replace("source", URLEncoder.encode(source, "UTF-8"));
+		JSONObject jsonResult = dogetString(url);
+		TransResult transResult = null;
+		StringBuffer dst = new StringBuffer();
+		
+		String errno = jsonResult.getString("errno");
+		Object obj =  jsonResult.get("data");
+		if("0".equals(errno) && !"[]".equals(obj.toString())){ //词典翻译成功且查询结果不为空
+			transResult = (TransResult) JSONObject.toBean(jsonResult,TransResult.class);
+			Data data = transResult.getData();
+			Symbols symboles = data.getSymbols()[0];
+			String ph_zh = symboles.getPh_zh()==null?"":"[音]"+symboles.getPh_zh()+"\n";
+			String ph_am = symboles.getPh_am()==null?"":"[英]"+symboles.getPh_en()+"\n";
+			String ph_en = symboles.getPh_en()==null?"":"[美]"+symboles.getPh_am()+"\n";
+			/**翻译原文*/
+			dst.append(source+"\n");
+			/**翻译音标*/
+			dst.append(ph_zh+ph_en+ph_am);
+			
+			Parts[] parts = symboles.getParts();
+			for(Parts pat : parts){
+				String part = pat.getPart();
+				String[] means = pat.getMeans();
+				/**翻译词性*/
+				dst.append(part);
+				/**翻译意思*/
+				for(String mean : means){
+					dst.append(mean+";");
+				}
+				dst.append("\n");
+			}
+		
+		}else{
+			 dst.append(translateFull(source));//百度词典API不能翻译的交给百度翻译API
+		}
+		return  dst.toString();
+	}
+
+
+	//百度翻译API
+	public static String translateFull(String source) throws UnsupportedEncodingException{
+		String url = TRANSLATE_URL.replace("ApiKey", "kgl3w0hL9BLBB8Gpc5QqGSF7").replace("source", URLEncoder.encode(source, "UTF-8"));
+		JSONObject jsonResult = dogetString(url);
+//		List<Map> list = (List<Map>) jsonResult.get("trans_result");
+		//获取json数据里的数组有两种方法,一种是获取jsonArray类型的数据;一种是get后转为List<Map>类型
+		JSONArray jsonArray = jsonResult.getJSONArray("trans_result");
+		int size = jsonArray.size();
+		StringBuffer dst = new StringBuffer();
+		for(int i=0; i<size; i++){
+			/**翻译译文*/
+			dst.append(jsonArray.getJSONObject(i).getString("dst"));
+		}
+		return dst.toString();
+	}
+
 }
