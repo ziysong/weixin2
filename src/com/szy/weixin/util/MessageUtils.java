@@ -118,10 +118,17 @@ System.out.println(map);
 		return textMessageToXml(textMsg);
 	}
 
-	//普通文本消息3：语音翻译出错的提示信息
-	public static String getTextMsg3(String fromUserName, String toUserName) {
+	//普通文本消息：语音翻译出错的提示信息
+	public static String getTransErrorMsg(String fromUserName, String toUserName) {
 		TextMessage textMsg = getTextMsg(fromUserName,toUserName);
 		textMsg.setContent("您的语音有误,请再说一遍.目前语音输入只支持翻译功能.");
+		return textMessageToXml(textMsg);
+	}
+	
+	//普通文本消息：查询天气出错的提示信息
+	public static String getWeatherErrorMsg(String fromUserName, String toUserName) {
+		TextMessage textMsg = getTextMsg(fromUserName,toUserName);
+		textMsg.setContent("查询失败,请重新输入.");
 		return textMessageToXml(textMsg);
 	}
 	
@@ -146,7 +153,6 @@ System.out.println(map);
 			sb.append("*翻译football\n");
 			sb.append("*翻译足球\n");
 			sb.append("*或者通过语音说出您要翻译的内容,如说:\"翻译football\" \n");
-			sb.append("回复?获取帮助");
 			textMsg.setContent(sb.toString());
 			return textMessageToXml(textMsg);
 		}  
@@ -292,17 +298,26 @@ System.out.println(map);
 	//翻译：
 	public static String getTransMsg(String content, String fromUserName,
 			String toUserName) throws UnsupportedEncodingException {
-		if(content.startsWith("翻译")){
-			String  source = content.replaceFirst("^翻译", "").trim();
-			if("".equals(source)){
-				return MessageUtils.getTransHelp(fromUserName,toUserName); //content为翻译,获取翻译帮助
-			}else{
-				String dst = WeiXinUtils.translate(source);//content为翻译XX,获取翻译内容
-				return MessageUtils.getTextMsg2(fromUserName,toUserName,dst);
-			}
+		
+		String  source = content.replaceFirst("^翻译", "").trim();
+		if("".equals(source)){
+			return MessageUtils.getTransHelp(fromUserName,toUserName); //content为翻译,获取翻译帮助
 		}else{
-			return MessageUtils.getTextMsg3(fromUserName,toUserName);
+			String dst = WeiXinUtils.translate(source);//content为翻译XX,获取翻译内容
+			return MessageUtils.getTextMsg2(fromUserName,toUserName,dst);
 		}
+		
+	}
+
+	//天气：
+	public static String getWeatherMsg(String content, String fromUserName,
+			String toUserName) {
+		String weather = WeiXinUtils.getWeather(content);
+		if(!"".equals(weather)){
+			return MessageUtils.getTextMsg2(fromUserName,toUserName,weather);
+		}
+		//查询天气出错
+		return MessageUtils.getWeatherErrorMsg(fromUserName,toUserName);
 	}
 
 	

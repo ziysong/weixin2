@@ -37,6 +37,10 @@ import com.szy.weixin.translate.Data;
 import com.szy.weixin.translate.Parts;
 import com.szy.weixin.translate.Symbols;
 import com.szy.weixin.translate.TransResult;
+import com.szy.weixin.weather.Index;
+import com.szy.weixin.weather.Results;
+import com.szy.weixin.weather.WeatherData;
+import com.szy.weixin.weather.WeatherResult;
 
 public class WeiXinUtils {
 
@@ -255,10 +259,10 @@ public class WeiXinUtils {
 		button31.setKey("31");
 		button31.setType("scancode_push");
 		//子菜单2
-		ClickButton button32 = new ClickButton();
-		button32.setName("拍一拍");
-		button32.setKey("32");
-		button32.setType("pic_sysphoto");
+		ViewButton button32 = new ViewButton();
+		button32.setName("历史文章");
+		button32.setUrl("http://mp.weixin.qq.com/mp/getmasssendmsg?__biz=MjM5Njc2NDE3OQ==#wechat_webview_type=1&wechat_redirect");
+		button32.setType("view");
 		//子菜单3
 		ClickButton button33 = new ClickButton();
 		button33.setName("我在哪");
@@ -328,7 +332,8 @@ public class WeiXinUtils {
 				for(String mean : means){
 					dst.append(mean+";");
 				}
-				dst.append("\n");
+				dst.deleteCharAt(dst.lastIndexOf(";"));//每个词性的最后一个意思不加;
+				dst.append("\n"); //每个词性及对应意思后换行
 			}
 		
 		}else{
@@ -352,6 +357,64 @@ public class WeiXinUtils {
 			dst.append(jsonArray.getJSONObject(i).getString("dst"));
 		}
 		return dst.toString();
+	}
+	
+	//天气查询
+	public static String getWeather(String city){
+		String weather_url = "http://api.map.baidu.com/telematics/v3/weather?location=CITY&output=json&ak=AK";//ak不等于Secret Key
+		String url = weather_url.replace("CITY",city).replace("AK", "kgl3w0hL9BLBB8Gpc5QqGSF7");
+		JSONObject jsonResult = dogetString(url);	
+		String status = jsonResult.getString("status");
+		StringBuffer sb = new StringBuffer();
+		if("success".equals(status)){
+			WeatherResult weatherResult = (WeatherResult) JSONObject.toBean(jsonResult, WeatherResult.class);
+			Results results = weatherResult.getResults()[0];
+			Index[] index = results.getIndex();
+			WeatherData[] weather_data = results.getWeather_data();
+			String currentCity = results.getCurrentCity();
+			
+			String radiation = index[5].getDes();//紫外线建议
+			String pm25 = results.getPm25();
+			String pm25Des = "";
+			if(!"".equals(pm25)){
+				int pm25Num = Integer.parseInt(pm25);
+				pm25Des = pm25Num<50?"一级,优,绿色":pm25Num<100?"二级,良,黄色":pm25Num<150?"三级,轻度污染,橙色":pm25Num<200?"四级,中度污染 ,红色":pm25Num<300?"五级,重度污染 ,紫色":"六级,严重污染, 褐红色";
+			}
+			
+			//今天：
+			String weather0 = weather_data[0].getWeather();
+			String temeperature0 = weather_data[0].getTemperature();
+			String wind0 = weather_data[0].getWind();
+			sb.append(currentCity+": ").append(weather0+";").append(temeperature0+";")
+			  .append(wind0);
+			if(!"".equals(pm25Des)){
+				sb.append(";pm2.5指数:"+pm25+","+pm25Des+"\n");
+			}else{
+				sb.append("\n");
+			}
+			//明天
+			String weather1 = weather_data[1].getWeather();
+			String temeperature1 = weather_data[1].getTemperature();
+			String wind1 = weather_data[1].getWind(); 
+			sb.append("\n明天: "+weather1+";"+temeperature1+";"+wind1+"\n");
+			//后天
+			String weather2 = weather_data[2].getWeather();
+			String temeperature2 = weather_data[2].getTemperature();
+			String wind2 = weather_data[2].getWind(); 
+			sb.append("后天: "+weather2+";"+temeperature2+";"+wind2+"\n");
+			
+			//大后天
+			if(weather_data.length==4){
+				String weather3 = weather_data[3].getWeather();
+				String temeperature3 = weather_data[3].getTemperature();
+				String wind3 = weather_data[3].getWind(); 
+				sb.append("大后天: "+weather3+";"+temeperature3+";"+wind3+"\n");
+			}
+			
+			//今日建议
+			sb.append("\n建议:"+radiation);  
+		}
+		return sb.toString();
 	}
 
 }

@@ -59,7 +59,7 @@ public class WeiXinServlet extends HttpServlet{
 		toUserName = map.get("ToUserName"); //接收方name
 		fromUserName = map.get("FromUserName"); //发送方name 
 		msgType = map.get("MsgType"); //消息类型
-		content = map.get("Content"); //消息内容
+		content = map.get("Content").trim(); //消息内容
 		createTime = map.get("CreateTime");
 
 		//回复消息
@@ -67,9 +67,15 @@ public class WeiXinServlet extends HttpServlet{
 		
 		//语音消息
 		if(MessageUtils.MESSAGE_VOICE.equals(msgType)){
-			content = map.get("Recognition");
-			//语音翻译
-			message = MessageUtils.getTransMsg(content,fromUserName,toUserName);
+			content = map.get("Recognition").trim();
+			if(content.startsWith("翻译")){//语音翻译
+				message = MessageUtils.getTransMsg(content,fromUserName,toUserName);
+			}else if(content.endsWith("市") || content.endsWith("县")){//天气查询
+				message = MessageUtils.getWeatherMsg(content,fromUserName,toUserName);
+			}else{
+				message = MessageUtils.getTransErrorMsg(fromUserName, toUserName);
+			}
+			
 		}
 		//文本消息
 		if(MessageUtils.MESSAGE_TEXT.equals(msgType)){
@@ -104,6 +110,8 @@ public class WeiXinServlet extends HttpServlet{
 			//翻译
 			if(content.startsWith("翻译")){
 				message = MessageUtils.getTransMsg(content,fromUserName,toUserName);
+			}else if(content.endsWith("市") || content.endsWith("县")){
+				message = MessageUtils.getWeatherMsg(content,fromUserName,toUserName);
 			}
 			
 		}else if(MessageUtils.MESSAGE_EVENT.equals(msgType)){
