@@ -1,0 +1,18 @@
+@CHARSET "UTF-8";
+* { margin: 0; padding: 0; font-family: "微软雅黑";}
+a { text-decoration: none;}
+input:focus { outline: none;}
+
+body { background: #f8f8f9;}
+
+#top { width: 82%;}
+#top img { padding: 12% 18% 4%;}
+
+#form { width: 100%; color: #a9a9a9; padding-top: 12%; margin-bottom: 16%;}
+#form label { display: block; width: 100%; }
+#form img { padding-top: 2%; }
+#form #set { background: #fff; width: 100%; }
+#form .bott { width: 90%; margin: 0 auto;}
+#form #set input { font-size: 16px; background: #fff; border: 0; line-height: 30px; }
+#form .btn { background: #133984; width: 90%; border: none; margin-left: 5%; padding: 2%; margin-top: 4%; color: #fff; border-radius: none;}
+#form #note { width: 80%; margin-left: 6%; margin-top: 8%; padding: 8% 4%; border: 1px dotted #acacac; text-align: center; border-radius: none;}

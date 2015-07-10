@@ -43,7 +43,8 @@ public class MessageUtils {
 	//事件类型:Event.它的消息类型是event
 	public final static String MESSAGE_SUBSCRIBE = "subscribe"; //关注
 	public final static String MESSAGE_UNSUBSCRIBE = "unsubscribe";//取消关注
-	public final static String MESSAGE_CLICK = "CLICK";//单击子菜单
+	public final static String MESSAGE_CLICK = "CLICK";//子菜单的点击事件
+	public final static String MESSAGE_VIEW = "VIEW";//子菜单的view事件
 	public final static String MESSAGE_LOCATION_SELECT = "location_select";//地理位置选择
 	
 	
@@ -59,8 +60,8 @@ public class MessageUtils {
 		List<Element> elements = root.elements();
 		for(Element element : elements){
 			map.put(element.getName(), element.getText());
-System.out.println(map);			
 		}
+System.out.println("接收的消息："+map);
 		return map;
 	}
 	
@@ -107,7 +108,7 @@ System.out.println(map);
 	//普通文本消息1
 	public static String getTextMsg1(String fromUserName, String toUserName) {
 		TextMessage textMsg = getTextMsg(fromUserName,toUserName);
-		textMsg.setContent("宋子扬,性别男,爱好女");
+		textMsg.setContent("宋子扬,性别男");
 		return textMessageToXml(textMsg);
 	}
 	
@@ -140,6 +141,7 @@ System.out.println(map);
 		sb.append("回复'2'可获取一条图文消息/:X-)/:X-) \n");  
 		sb.append("回复'3'试试看/::$/::$ \n");  
 		sb.append("回复'翻译'获取翻译帮助 \n");
+		sb.append("回复'天气'获取天气帮助\n");
 		sb.append("回复'?'可获取帮助\ue056\ue056 \n");
 		textMsg.setContent(sb.toString());   
 		return textMessageToXml(textMsg);
@@ -156,7 +158,17 @@ System.out.println(map);
 			textMsg.setContent(sb.toString());
 			return textMessageToXml(textMsg);
 		}  
-		
+		//获取翻译帮助：
+		public static String getWeatherHelp(String fromUserName, String toUserName){
+			TextMessage textMsg = getTextMsg(fromUserName,toUserName);
+			StringBuffer sb = new StringBuffer();
+			sb.append("天气查询帮助：\n");
+			sb.append("城市名以'市'或者'县'结尾时默认是查询该市或县的天气.\n");
+			sb.append("如发送:吉安市,可查询吉安市地区的天气\n");
+			sb.append("如发送:吉安县,可查询吉安县地区的天气\n");
+			textMsg.setContent(sb.toString());
+			return textMessageToXml(textMsg);
+		}  	
 	
 	//首次关注时推送
 	public static String getFirstMenu(String fromUserName, String toUserName) {
@@ -167,6 +179,7 @@ System.out.println(map);
 		sb.append("回复'2'可获取一条图文消息/:X-)/:X-) \n");  
 		sb.append("回复'3'试试看/::$/::$ \n");  
 		sb.append("回复'翻译'获取翻译帮助 \n");
+		sb.append("回复'天气'获取天气帮助\n");
 		sb.append("回复'?'可获取帮助\ue056\ue056 ");
 		textMsg.setContent(sb.toString());
 		return textMessageToXml(textMsg);  
@@ -193,7 +206,7 @@ System.out.println(map);
 		article.setTitle("大数据离不开\"厚数据\"");
 		article.setDescription("大数据是驱动下一轮创新的动力,风投公司专门确立针对大数据的投资组合。");
 		/**考虑能否设置相对路径:不能*/
-		article.setPicUrl("http://ziysong.tunnel.mobi/weixin2/image/girl1.jpg");  
+		article.setPicUrl("http://ziysong.tunnel.mobi/weixin2/image/3.jpg");  
 		article.setUrl("https://github.com/ziysong");
 		articles.add(article);
 		
@@ -210,21 +223,21 @@ System.out.println(map);
 		News article1 = new News(); //第一条显示title+大图
 		article1.setTitle("Hibernate详细教程");
 		article1.setDescription("一.搭建环境。二.写配置文件：hibernate.cfg.xml。");
-		article1.setPicUrl("http://ziysong.tunnel.mobi/weixin2/image/girl2.jpg");
+		article1.setPicUrl("http://ziysong.tunnel.mobi/weixin2/image/2.jpg");
 		article1.setUrl("https://github.com/ziysong");
 		articles.add(article1);
 		     
 		News article2 = new News(); //后面都是显示title+小图
 		article2.setTitle("Android用户查看手机通知速度币ios快两倍");
 		article2.setDescription("Android用户查看手机通知速度币ios快两倍");
-		article2.setPicUrl("http://ziysong.tunnel.mobi/weixin2/image/girl3.jpg");
+		article2.setPicUrl("http://ziysong.tunnel.mobi/weixin2/image/3.jpg");
 		article2.setUrl("https://github.com/ziysong");
 		articles.add(article2);
 		
 		News article3 = new News();
 		article3.setTitle("从携程瘫痪看运维85条军规");
 		article3.setDescription("从携程瘫痪看运维85条军规");
-		article3.setPicUrl("http://ziysong.tunnel.mobi/weixin2/image/g.jpg");
+		article3.setPicUrl("http://ziysong.tunnel.mobi/weixin2/image/4.jpg");
 		article3.setUrl("http://blog.csdn.net/u012599724/article/details/45932801");
 		articles.add(article3);
 		

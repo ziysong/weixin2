@@ -4,19 +4,15 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>首页</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"> 
+<title>出错啦</title>
 </head>
 <body>
-这是首页
-<form action="${pageContext.request.contextPath }/weiXinServlet">
-	<input type="submit" value="点击访问servlet"/>
-</form>
 
-<form action="${pageContext.request.contextPath }/jsp/query.jsp">
-	<input type="submit" value="查询成绩"/>
-</form>
-
-
+<%
+String str = (String)request.getAttribute("mapResult");
+out.println(str);
+%>
 
 </body>
 </html>

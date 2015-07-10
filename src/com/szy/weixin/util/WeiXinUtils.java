@@ -1,12 +1,14 @@
 package com.szy.weixin.util;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -15,7 +17,13 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.Part;
 
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -24,11 +32,21 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.params.ClientPNames;
+import org.apache.http.client.params.CookiePolicy;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
+import org.json.JSONException;
 
+import com.facepp.error.FaceppParseException;
+import com.facepp.http.HttpRequests;
+import com.facepp.http.PostParameters;
 import com.szy.weixin.domain.AccessToken;
+import com.szy.weixin.facedetect.Attribute;
+import com.szy.weixin.facedetect.Face;
+import com.szy.weixin.facedetect.FaceResult;
+import com.szy.weixin.facedetect.Position;
 import com.szy.weixin.menu.Button;
 import com.szy.weixin.menu.ClickButton;
 import com.szy.weixin.menu.Menu;
@@ -49,13 +67,14 @@ public class WeiXinUtils {
 
 	private static final String ACCESSTOKEN_URL = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=APPID&secret=APPSECRET";
 	private static final String UPLOAD_TEMP_URL = "https://api.weixin.qq.com/cgi-bin/media/upload?access_token=ACCESS_TOKEN&type=TYPE";
-	private static final String UPLOAD_PERM_NEWS_URL = "https://api.weixin.qq.com/cgi-bin/material/add_news?access_token=ACCESS_TOKEN";
-	private static final String UPLOAD_PERM_OTHER_URL = "https://api.weixin.qq.com/cgi-bin/material/add_material?access_token=ACCESS_TOKEN";
 	private static final String CREATE_MENU_URL = "https://api.weixin.qq.com/cgi-bin/menu/create?access_token=ACCESS_TOKEN";
 
 	private static final String TRANSLATE_URL = "http://openapi.baidu.com/public/2.0/bmt/translate?client_id=ApiKey&q=source&from=auto&to=auto";
 	private static final String DICT_TRANSLATE_URL = "http://openapi.baidu.com/public/2.0/translate/dict/simple?client_id=ApiKey&q=source&from=auto&to=auto";
-													
+	
+	private static final String FACEPP_APIKEY = "fef482c4caf59cd63bd36c1462549ece";
+	private static final String FACEPP_APISECRET = "Beai_ayA8LJv9PrvpaWJq4R2wbk6MWJ9";
+	
 	/**
 	 * get请求
 	 * @param url:请求地址
@@ -63,6 +82,9 @@ public class WeiXinUtils {
 	 */
 	public static JSONObject dogetString(String url){
 		DefaultHttpClient httpClient = new DefaultHttpClient();
+		//
+		httpClient.getParams().setParameter(ClientPNames.COOKIE_POLICY, CookiePolicy.BEST_MATCH);
+		
 		HttpGet httpGet = new HttpGet(url);
 		JSONObject jsonObject = null;
 		try {
@@ -254,10 +276,10 @@ public class WeiXinUtils {
 		button2.setUrl("http://www.weibo.com/");
 
 		//子菜单1
-		ClickButton button31 = new ClickButton();
-		button31.setName("扫一扫");
-		button31.setKey("31");
-		button31.setType("scancode_push");
+		ViewButton button31 = new ViewButton();
+		button31.setName("查成绩");
+		button31.setUrl("http://ziysong.tunnel.mobi/weixin2/markQueryServlet");
+		button31.setType("view");
 		//子菜单2
 		ViewButton button32 = new ViewButton();
 		button32.setName("历史文章");
@@ -359,6 +381,7 @@ public class WeiXinUtils {
 		return dst.toString();
 	}
 	
+	
 	//天气查询
 	public static String getWeather(String city){
 		String weather_url = "http://api.map.baidu.com/telematics/v3/weather?location=CITY&output=json&ak=AK";//ak不等于Secret Key
@@ -417,4 +440,195 @@ public class WeiXinUtils {
 		return sb.toString();
 	}
 
+	
+	//人脸识别：本方法是使用自己的dogetString()方法只可以传递url参数,不能传递二进制图片流
+	public static Map<String,String> detectFace1(String url,Part file) throws IOException{
+		String detect_url_1 = "https://apicn.faceplusplus.com/v2/detection/detect?api_key=APIKEY&api_secret=APISECRET&url=JPGURL&mode=normal&attribute=gender,age";
+		
+		JSONObject jsonResult1 = null;
+		if(url != null){
+			final String url1 = detect_url_1.replace("APIKEY", FACEPP_APIKEY)
+					  .replace("APISECRET", FACEPP_APISECRET)
+					  .replace("JPGURL", url);
+			jsonResult1 = dogetString(url1);
+System.out.println("jsonResult1:"+jsonResult1);			
+		}
+		
+		FaceResult faceResult = null;
+		Map<String, String> resultMap = new HashMap<>();
+		if(!jsonResult1.containsKey("error") && !"[]".equals(jsonResult1.getString("face"))){
+			faceResult = (FaceResult)JSONObject.toBean(jsonResult1, FaceResult.class);
+			//图片宽度、高度、url
+			String imageWidth = faceResult.getImg_width();
+			String imageHeight = faceResult.getImg_height();
+			String imageUrl = faceResult.getUrl();
+			resultMap.put("imageWidth", imageWidth);
+			resultMap.put("imageHeight", imageHeight);
+			resultMap.put("imageUrl", imageUrl);
+			
+			Face[] face = faceResult.getFace();
+			Attribute attribute = face[0].getAttribute();
+			Position position = face[0].getPosition();
+			
+			//性别、年龄
+			String gender = attribute.getGender().getValue();
+			String age = attribute.getAge().getValue();
+			String ageRange = attribute.getAge().getRange();
+			resultMap.put("gender", gender);
+			resultMap.put("age", age);
+			resultMap.put("ageRange", ageRange);
+			
+			//人脸中心、宽度及高度
+			String center_x = position.getCenter().getX();
+			String center_y = position.getCenter().getY();
+			String faceWidth = position.getWidth();
+			String faceHeight = position.getHeight();
+			resultMap.put("center_x", center_x);
+			resultMap.put("center_y", center_y);
+			resultMap.put("faceWidth", faceWidth);
+			resultMap.put("faceHeight", faceHeight);
+			
+			return resultMap;
+		}		
+		return null;
+	}
+	
+	//CallBak:回调函数
+	public interface CallBack{
+		void success(org.json.JSONObject jsonResult);
+		void error(Exception exception);
+	}
+	
+	//人脸识别(用新线程版本)：本方法是使用FacePP提供的api,可以传递url参数或二进制图片流,返回的JSONObject也是重写后的
+	public static void detectFace2(final String url,final Part file, final CallBack callBack){
+		
+		new Thread(new Runnable(){
+			public void run() {
+				HttpRequests httpRequest = new HttpRequests(FACEPP_APIKEY, FACEPP_APISECRET, true, true);
+				//设置参数:图片url或图片二进制流
+				PostParameters params = new PostParameters();
+				if(url != null){
+					params.setUrl(url);
+				}else{
+					try{
+						InputStream is = file.getInputStream();
+						ByteArrayOutputStream bos = new ByteArrayOutputStream();
+						byte[] buffer = new byte[2048];
+						int hasRead = 0;
+						while((hasRead=is.read(buffer)) != -1){
+							bos.write(buffer, 0 , hasRead);
+						}
+						byte[] data = new byte[(int) file.getSize()+1];
+						data = bos.toByteArray();
+						params.setImg(data);
+					}catch(Exception e){
+						if(callBack != null){
+							callBack.error(e);
+						}
+						e.printStackTrace();
+					}
+				}
+				
+				
+				org.json.JSONObject jsonResult = null;
+				try {
+					jsonResult = httpRequest.detectionDetect(params);
+					if(callBack != null){
+						callBack.success(jsonResult);
+					}
+				} catch (FaceppParseException e) {
+					if(callBack != null){
+						callBack.error(e);
+					}
+					e.printStackTrace();
+				}	
+				
+			}
+		}).start();
+
+		
+	}
+	
+	//getResultList:封装数据
+	public static List<Map<String,String>> getResultList(String url, Part file){
+		
+		List<Map<String,String>> resultList = new ArrayList<>();
+		org.json.JSONObject jsonResult = detectFace3(url,file);
+System.out.println(jsonResult);
+		try {
+			String imageWidth = Integer.toString(jsonResult.getInt("img_width"));
+			String imageHeight = Integer.toString(jsonResult.getInt("img_height"));
+			String imageUrl = jsonResult.get("url").toString();
+			
+			org.json.JSONArray faces = jsonResult.getJSONArray("face");
+			int faceCount = faces.length();
+			for(int i=0; i<faceCount; i++){
+				org.json.JSONObject face = faces.getJSONObject(i);
+				
+				org.json.JSONObject attribute = face.getJSONObject("attribute");
+				String age = Integer.toString(attribute.getJSONObject("age").getInt("value"));
+				String gender = attribute.getJSONObject("gender").getString("value");
+				
+				org.json.JSONObject position = face.getJSONObject("position");
+				String faceWidth = Integer.toString(position.getInt("width"));
+				String faceHeight = Integer.toString(position.getInt("height"));
+				String center_x = Integer.toString(position.getJSONObject("center").getInt("x"));
+				String center_y = Integer.toString(position.getJSONObject("center").getInt("y"));
+				
+				Map<String,String> map = new HashMap<>();
+				map.put("age", age);
+				map.put("gender", gender);
+				map.put("faceWidth", faceWidth);
+				map.put("faceHeight", faceHeight);
+				map.put("center_x", center_x);
+				map.put("center_y", center_y);
+				map.put("imageWidth", imageWidth); 
+				map.put("imageHeight", imageHeight);
+			    map.put("imageUrl", imageUrl);  
+			    resultList.add(map);
+			}
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+			
+		return resultList;
+	}
+	
+	
+	//人脸识别(不用新线程):
+	public static org.json.JSONObject detectFace3( String url, Part file ){
+		
+		HttpRequests httpRequest = new HttpRequests(FACEPP_APIKEY, FACEPP_APISECRET, true, true);
+		//设置参数:图片url或图片二进制流
+		PostParameters params = new PostParameters();
+		if(url != null){
+			params.setUrl(url);
+		}else{
+			try{
+				InputStream is = file.getInputStream();
+				ByteArrayOutputStream bos = new ByteArrayOutputStream();
+				byte[] buffer = new byte[4096];
+				int hasRead = 0;
+				while((hasRead=is.read(buffer)) != -1){
+					bos.write(buffer, 0 , hasRead);
+				}
+				byte[] data = new byte[(int) file.getSize()+1];
+				data = bos.toByteArray();
+				params.setImg(data);
+			}catch(Exception e){
+				e.printStackTrace();
+			}
+		}
+		
+		org.json.JSONObject jsonResult = null;
+		try {
+			jsonResult = httpRequest.detectionDetect(params);//成功则返回success回调方法
+		} catch (FaceppParseException e) {//失败则返回error回调方法
+			e.printStackTrace();
+		}	
+		
+		return jsonResult;
+	}
+	
+	
 }

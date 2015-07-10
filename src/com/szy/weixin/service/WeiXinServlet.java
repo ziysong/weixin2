@@ -2,6 +2,10 @@ package com.szy.weixin.service;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.servlet.ServletException;
@@ -12,11 +16,11 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.dom4j.DocumentException;
 
-import com.szy.weixin.domain.NewsMessage;
-import com.szy.weixin.domain.TextMessage;
+import com.szy.weixin.domain.Student;
+import com.szy.weixin.mark.MarkQueryUtils;
 import com.szy.weixin.util.CheckUtils;
+import com.szy.weixin.util.DaoUtils;
 import com.szy.weixin.util.MessageUtils;
-import com.szy.weixin.util.WeiXinUtils;
 
 @WebServlet(urlPatterns={"/weiXinServlet"})
 public class WeiXinServlet extends HttpServlet{
@@ -47,10 +51,12 @@ public class WeiXinServlet extends HttpServlet{
 		Map<String, String> map = null;
 		try {
 			map = MessageUtils.xmlToMessage(request);
+			request.getServletContext().setAttribute("userMessage", map);
 		} catch (DocumentException e) {
 			out.print("");
 			e.printStackTrace();
-		}
+		} 
+		
 		String content = null;
 		String toUserName = null;
 		String fromUserName = null;
@@ -59,9 +65,11 @@ public class WeiXinServlet extends HttpServlet{
 		toUserName = map.get("ToUserName"); //接收方name
 		fromUserName = map.get("FromUserName"); //发送方name 
 		msgType = map.get("MsgType"); //消息类型
-		content = map.get("Content").trim(); //消息内容
 		createTime = map.get("CreateTime");
-
+		if(map.containsKey("Content")){
+			content = map.get("Content").trim(); //消息内容
+		}
+		
 		//回复消息
 		String message = null;
 		
@@ -96,6 +104,9 @@ public class WeiXinServlet extends HttpServlet{
 			case("5"):
 				message = MessageUtils.getMusicMsg1(fromUserName, toUserName);
 				break;
+			case("天气"):
+				message = MessageUtils.getWeatherHelp(fromUserName, toUserName);
+				break;
 			case("？"):
 				message = MessageUtils.getHelpMenu(fromUserName,toUserName);
 				break;  
@@ -114,7 +125,7 @@ public class WeiXinServlet extends HttpServlet{
 				message = MessageUtils.getWeatherMsg(content,fromUserName,toUserName);
 			}
 			
-		}else if(MessageUtils.MESSAGE_EVENT.equals(msgType)){
+		}else if(MessageUtils.MESSAGE_EVENT.equals(msgType)){//消息类型为event
 			String eventType = map.get("Event"); //获取事件类型
 			//关注事件
 			if(MessageUtils.MESSAGE_SUBSCRIBE.equals(eventType)){
@@ -127,14 +138,21 @@ public class WeiXinServlet extends HttpServlet{
 					message = MessageUtils.getImageMsg1(fromUserName, toUserName);
 				}
 			}
-			//地理位置选择
+			//view事件
+			if(MessageUtils.MESSAGE_VIEW.equals(eventType)){
+				String eventKey = map.get("EventKey");
+				if("http://ziysong.tunnel.mobi/weixin2/markQueryServlet".equals(eventKey)){
+					MarkQueryServlet.setFromUserName(fromUserName);
+				}
+			}  
+		//消息类型为location:地理位置选择
 		}else if(MessageUtils.MESSAGE_LOCATION.equals(msgType)){
 			message = MessageUtils.getTextMsg2(fromUserName,toUserName,map.get("Label"));
 		}
 		
 		//发送消息
 		if(message != null){
-System.out.println(message);
+System.out.println("回复的消息："+message);
 			out.print(message);
 		}else{
 			out.print("");
